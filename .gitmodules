@@ -1,6 +1,0 @@
-[submodule "lib/lufa"]
-	path = lib/lufa
-	url = https://github.com/abcminiuser/lufa.git
-[submodule "lib/pico-sdk"]
-	path = lib/pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
