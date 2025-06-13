@@ -47,7 +47,7 @@ typedef struct TU_ATTR_PACKED {
 #define USB_HID_DESCRIPTOR_REPORT_TYPE  HID_DESC_TYPE_REPORT
 
 #define USB_ENDPOINT_TYPE               TUSB_DESC_ENDPOINT
-#define USB_ENDPOINT_SIZE               {.size = CFG_TUD_HID_BUFSIZE}
+#define USB_ENDPOINT_SIZE               CFG_TUD_HID_BUFSIZE
 
 #define USB_ENDPOINT_ADDR_IN            HID_EPADDR_IN
 #define USB_ENDPOINT_ATTRS_IN           {.xfer = TUSB_XFER_INTERRUPT,}
