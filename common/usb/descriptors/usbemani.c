@@ -49,6 +49,7 @@ const USB_REPORT USB_ATTRIBUTES USBemani_Report[] = {
 	HID_RI_USAGE_PAGE(8, 0x01), // Generic Desktop
 	HID_RI_USAGE(8, 0x04),      // Joystick
 	HID_RI_COLLECTION(8, 0x01), // Application
+	HID_RI_REPORT_ID(8, ReportID_Input),
 #if defined(USB_ENCODER_AXES_ACTIVE) && (USB_ENCODER_AXES_ACTIVE > 0)
     HID_RI_USAGE_PAGE(8, 0x01),
     HID_RI_LOGICAL_MINIMUM(8, 0),
@@ -118,6 +119,8 @@ const USB_REPORT USB_ATTRIBUTES USBemani_Report[] = {
 		HID_RI_INPUT(8, HID_IOF_CONSTANT),
 #endif
 #endif
+
+HID_RI_REPORT_ID(8, ReportID_Output),
 #include "usb/descriptors/output.c"
   HID_RI_END_COLLECTION(0),
 };
