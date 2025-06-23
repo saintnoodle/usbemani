@@ -45,5 +45,6 @@ typedef enum {
 
 typedef enum {
   ReportID_Input = 0x01,
-  ReportID_Output
+  ReportID_Output,
+  ReportID_Command = 0xFF
 } USB_ReportID_t;
