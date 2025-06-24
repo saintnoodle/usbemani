@@ -121,15 +121,7 @@ const USB_REPORT USB_ATTRIBUTES USBemani_Report[] = {
 #endif
 
 #include "usb/descriptors/output.c"
-
-  HID_RI_REPORT_ID(8, ReportID_Command),
-  HID_RI_USAGE_PAGE(8, 0xFF00),
-  HID_RI_USAGE(8, 0x20),
-  HID_RI_LOGICAL_MINIMUM(8, 0),
-  HID_RI_LOGICAL_MAXIMUM(8, 255),
-  HID_RI_REPORT_SIZE(8, 8),
-  HID_RI_REPORT_COUNT(8, 32),
-  HID_RI_FEATURE(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
+#include "usb/descriptors/command.c"
 
   HID_RI_END_COLLECTION(0),
 };

@@ -7,6 +7,10 @@ USB_LightingHelper_t USB_LightingHelper = {
   .active = 0,
 };
 
+CommandReport_t _command = {
+  .ready = false,
+};
+
 int main(void) {
   // Initialize hardware
   Arch_Init();

@@ -16,5 +16,7 @@
 #define RGB_PINS 22
 #define RGB_PIO pio0
 
+#define USB_CMD_REPORT_SIZE 64
+
 /*** Chain Inclusion ***/
 #include_next "config.h"

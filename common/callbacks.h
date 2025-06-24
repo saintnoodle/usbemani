@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "config.h"
+#include "command.h"
 #include "usb/descriptors/usbemani.h"
 #if defined(KONAMI_CLOUD_ENABLED)
 #include "usb/descriptors/konamicloud.h"
@@ -26,6 +27,8 @@ WEAK void CALLBACK_OnUSBemaniInputRequest(USB_InputReport_USBemani_t *input);
 WEAK void CALLBACK_OnKonamiCloudInputRequest(USB_InputReport_KonamiCloud_t *input);
 // When a USB output packet is ready for processing
 WEAK void CALLBACK_OnUSBOutputAvailable(USB_OutputReport_t *output);
+// When a USB command packet is ready for processing
+WEAK void CALLBACK_OnUSBCommandAvailable(CommandReport_t *command);
 
 /*** Lighting ***/
 // When USB lighting is active, run this code to perform draws.

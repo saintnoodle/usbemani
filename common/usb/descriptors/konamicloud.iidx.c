@@ -30,6 +30,7 @@ const USB_REPORT USB_ATTRIBUTES KonamiCloud_Report[] = {
   0xC0,              //   End Collection
   // NOTE: This device does not normally provide an output endpoint.
 #include "usb/descriptors/output.c"
+#include "usb/descriptors/command.c"
   0xC0,              // End Collection
 };
 

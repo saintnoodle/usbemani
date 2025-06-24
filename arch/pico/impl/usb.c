@@ -23,6 +23,55 @@ void _impl_hid_inputReportUSBemani(void) {
   tud_hid_report(ReportID_Input, &input, sizeof(input));
 }
 
+// Sends input report data to the host.
+uint16_t _impl_hid_handleInputReport(uint8_t *buffer) {
+  if (_usb_status.mode == USB_DeviceType_KonamiCloud) {
+#if defined(KONAMI_CLOUD_ENABLED)
+    USB_InputReport_KonamiCloud_t *input = (USB_InputReport_KonamiCloud_t *)buffer;
+    CALLBACK_OnKonamiCloudInputRequest(input);
+    return sizeof(USB_InputReport_KonamiCloud_t);
+#endif
+  } else {
+    USB_InputReport_USBemani_t *input = (USB_InputReport_USBemani_t *)buffer;
+    CALLBACK_OnUSBemaniInputRequest(input);
+    return sizeof(USB_InputReport_USBemani_t);
+  }
+}
+
+// Sends the response to a previously received command feature report.
+uint16_t _impl_hid_handleFeatureReport(uint8_t *buffer) {
+  if (!_command.ready) {
+    return 0;
+  }
+
+  static const uint16_t size = sizeof(USB_CommandResponse_t);
+  memcpy(buffer, &_command.response, size);
+
+  _command.ready = false;
+  memset(&_command.request, 0, sizeof(USB_CommandRequest_t));
+  memset(&_command.response, 0, sizeof(USB_CommandResponse_t));
+
+  return size;
+}
+
+// Called when an output report is received from the host.
+void _impl_hid_setOutputReport(uint8_t const *buffer, uint16_t bufsize) {
+  if (bufsize == sizeof(USB_OutputReport_t)) {
+    static USB_OutputReport_t output;
+    memcpy(&output, buffer, sizeof(USB_OutputReport_t));
+    CALLBACK_OnUSBOutputAvailable(&output);
+  }
+}
+
+// Called when a command feature report is received from the host.
+void _impl_hid_setFeatureReport(uint8_t const *buffer, uint16_t bufsize) {
+  if (bufsize == sizeof(USB_CommandRequest_t)) {
+    memcpy(&_command.request, buffer, sizeof(USB_CommandRequest_t));
+    memset(&_command.response, 0, sizeof(USB_CommandResponse_t));
+    CALLBACK_OnUSBCommandAvailable(&_command);
+  }
+}
+
 // Standard task for building input reports.
 // TinyUSB appears to handle output reports using the same handler as the output ControlRequest handler?
 void _impl_hid_dataHandlerTask(void) {
@@ -61,24 +110,16 @@ uint16_t tud_hid_get_report_cb(
   uint8_t *buffer,
   uint16_t reqlen
 ) {
-  if (report_type != HID_REPORT_TYPE_INPUT) return 0;
-
-  if (_usb_status.mode == USB_DeviceType_KonamiCloud) {
-#if defined(KONAMI_CLOUD_ENABLED)
-    USB_InputReport_KonamiCloud_t *input = (USB_InputReport_KonamiCloud_t *)buffer;
-    CALLBACK_OnKonamiCloudInputRequest(input);
-    return sizeof(USB_InputReport_KonamiCloud_t);
-#endif
-  } else {
-    USB_InputReport_USBemani_t *input = (USB_InputReport_USBemani_t *)buffer;
-    CALLBACK_OnUSBemaniInputRequest(input);
-    return sizeof(USB_InputReport_USBemani_t);
+  if (report_type == HID_REPORT_TYPE_INPUT) {
+    return _impl_hid_handleInputReport(buffer);
+  } else if (report_type == HID_REPORT_TYPE_FEATURE) {
+    return _impl_hid_handleFeatureReport(buffer);
   }
 
   return 0;
 }
 
-// Receive and process an output report.
+// Receive and process reports.
 void tud_hid_set_report_cb(
   uint8_t instance,
   uint8_t report_id,
@@ -89,10 +130,11 @@ void tud_hid_set_report_cb(
   // TODO:  HID reports work if we check `report_type` to confirm an output report.
   //        However, this only works for SET_REPORT requests and not URB Interrupt Outs.
   //        Why does this differ?
-  if (/* (report_type == HID_REPORT_TYPE_OUTPUT) && */ buffer && (bufsize == sizeof(USB_OutputReport_t))) {
-    static USB_OutputReport_t bufcpy;
-    memcpy(&bufcpy, buffer, sizeof(USB_OutputReport_t));
-    CALLBACK_OnUSBOutputAvailable(&bufcpy);
+  if (report_type == HID_REPORT_TYPE_OUTPUT) {
+    // Strip report ID before passing to the output handler.
+    _impl_hid_setOutputReport(++buffer, --bufsize);
+  } else if (report_type == HID_REPORT_TYPE_FEATURE) {
+    _impl_hid_setFeatureReport(buffer, bufsize);
   }
 }
 

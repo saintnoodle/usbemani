@@ -14,3 +14,13 @@ typedef struct __attribute__((packed)) {
   uint16_t  buttons;
 #endif
 } USB_InputReport_USBemani_t;
+
+typedef struct __attribute__((packed)) {
+  uint8_t id;
+  uint8_t data[USB_CMD_REPORT_SIZE - 2];
+} USB_CommandRequest_t;
+
+typedef struct __attribute__((packed)) {
+  uint8_t status;
+  uint8_t data[USB_CMD_REPORT_SIZE - 2];
+} USB_CommandResponse_t;
