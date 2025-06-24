@@ -1,6 +1,12 @@
 static const _pin_t  _button_pins[BUTTONS_AVAILABLE] = { BUTTON_PINS };
 static const uint8_t _button_pidx[BUTTONS_ACTIVE]    = { BUTTON_CHANNELS };
 
+#ifdef BUTTON_INVERTED
+static const uint8_t _button_invert[BUTTONS_ACTIVE]  = { BUTTON_INVERTED };
+#else
+static const uint8_t _button_invert[BUTTONS_ACTIVE]  = { 0 };
+#endif
+
 repeating_timer_t _button_timer;
 
 void _impl_button_poll(void) {
@@ -8,7 +14,7 @@ void _impl_button_poll(void) {
     const _pin_t pin = _button_pins[_button_pidx[i]];
 
     // Update the debounce state
-    _buttons.debounce[i] <<= 1; if (Pin_Read(pin)) _buttons.debounce[i] |= 1;
+    _buttons.debounce[i] <<= 1; if (Pin_Read(pin) ^ _button_invert[i]) _buttons.debounce[i] |= 1;
 
     // If we have 7 consecutive lows, the button is pressed
     if (_buttons.debounce[i] == 0x80) { _buttons.mask |=  (1 << i); continue; }
