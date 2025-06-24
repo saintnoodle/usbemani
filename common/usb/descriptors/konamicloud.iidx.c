@@ -4,6 +4,7 @@ const USB_REPORT USB_ATTRIBUTES KonamiCloud_Report[] = {
   0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
   0x09, 0x04,        // Usage (Joystick)
   0xA1, 0x01,        // Collection (Application)
+  HID_RI_REPORT_ID(8, ReportID_Input), // Report ID (Input)
   0x09, 0x01,        //   Usage (Pointer)
   0xA1, 0x00,        //   Collection (Physical)
   0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)

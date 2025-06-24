@@ -11,7 +11,7 @@ void _impl_hid_inputReportKonamiCloud(void) {
 
   memset(&input, 0, sizeof(input));
   CALLBACK_OnKonamiCloudInputRequest(&input);
-  tud_hid_report(0, &input, sizeof(input));
+  tud_hid_report(ReportID_Input, &input, sizeof(input));
 #endif
 }
 

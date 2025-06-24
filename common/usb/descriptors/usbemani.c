@@ -120,7 +120,6 @@ const USB_REPORT USB_ATTRIBUTES USBemani_Report[] = {
 #endif
 #endif
 
-HID_RI_REPORT_ID(8, ReportID_Output),
 #include "usb/descriptors/output.c"
 
   HID_RI_REPORT_ID(8, ReportID_Command),
