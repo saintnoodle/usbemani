@@ -1,5 +1,6 @@
 #pragma once
 
+#include "analog.h"
 #include "button.h"
 #include "encoder.h"
 
@@ -12,6 +13,9 @@ typedef struct __attribute__((packed)) {
 #endif
 #if defined(USB_BUTTONS_ACTIVE) && (USB_BUTTONS_ACTIVE > 0)
   uint16_t  buttons;
+#endif
+#if defined(USB_ANALOGS_ACTIVE) && (USB_ANALOGS_ACTIVE > 0)
+  uint8_t   analog[USB_ANALOGS_ACTIVE];
 #endif
 } USB_InputReport_USBemani_t;
 

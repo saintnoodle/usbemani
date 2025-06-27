@@ -27,6 +27,13 @@ int main(void) {
   // Initialize quirks
   Quirks_Init();
 
+#if defined(ANALOG_CHANNELS_ACTIVE) && (ANALOG_CHANNELS_ACTIVE > 0)
+  // HACK: Run the analog task a few times in case it's used in button readings
+  //       otherwise the subsequent checks will never pass.
+  for (int i = 0; i < 1000; i++)
+    Analog_Task();
+#endif
+
   // Check if bootloader entry is requested
   Arch_BootloaderCheck();
   // Check if Konami Cloud descriptors are requested

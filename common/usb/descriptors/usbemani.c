@@ -118,6 +118,16 @@ const USB_REPORT USB_ATTRIBUTES USBemani_Report[] = {
 		HID_RI_REPORT_COUNT(8, 1),
 		HID_RI_INPUT(8, HID_IOF_CONSTANT),
 #endif
+#if defined(USB_ANALOGS_ACTIVE) && (USB_ANALOGS_ACTIVE > 0)
+        // TODO: This works, but the definitions are probably nonsense.
+        HID_RI_USAGE_PAGE(8, 0x0D),
+        HID_RI_USAGE(8, 0x02),
+        HID_RI_LOGICAL_MINIMUM(8, 0),
+        HID_RI_LOGICAL_MAXIMUM(16, 255),
+        HID_RI_REPORT_SIZE(8, 8),
+        HID_RI_REPORT_COUNT(8, USB_ANALOGS_ACTIVE),
+        HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+#endif
 #endif
 
 #include "usb/descriptors/output.c"
@@ -210,5 +220,10 @@ WEAK void CALLBACK_OnUSBemaniInputRequest(USB_InputReport_USBemani_t *input) {
   // Center the axes
   for (uint8_t i = 0; i < USB_GENERAL_AXES_ACTIVE; i++)
     input->axis[i] = 128;
+#endif
+
+#if defined(USB_ANALOGS_ACTIVE) && (USB_ANALOGS_ACTIVE > 0)
+  for (uint8_t i = 0; i < USB_ANALOGS_ACTIVE; i++)
+    input->analog[i] = Analog_Get(i);
 #endif
 }
