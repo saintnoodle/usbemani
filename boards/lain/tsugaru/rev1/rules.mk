@@ -1,0 +1,4 @@
+TARGET_ARCH = pico
+
+PICO_BOARD = tsugaru
+PICO_PLATFORM = rp2350
