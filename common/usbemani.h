@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "utils.h"
 #include "usb.h"
+#include "command.h"
 
 #include "callbacks.h"
 
