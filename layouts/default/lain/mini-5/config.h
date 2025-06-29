@@ -1,11 +1,12 @@
 #pragma once
 
-/*** Buttons ***/
-#define BUTTON_UP_THRESHOLD      (255 * 0.05) //  5%
-#define BUTTON_DOWN_THRESHOLD    (255 * 0.10) // 10%
+/*** Analogs ***/
+#define ANALOG_CALIBRATION_UP      2340, 2302, 2368, 2369, 2389, 2291, 2320, 2401, 2305, 2288, 2322
+#define ANALOG_CALIBRATION_DOWN    4011, 3920, 4035, 4043, 4033, 3938, 3843, 4054, 4053, 3998, 3999
 
-#define BUTTON_CALIBRATION_UP    1905, 1863, 1942, 1932, 2086, 2029, 1990, 1762, 1890, 1915, 2102
-#define BUTTON_CALIBRATION_DOWN  1209, 1172, 1186, 1197, 1285, 1281, 1217, 1142, 1156, 1173, 1242
+/*** Buttons ***/
+#define BUTTON_UP_THRESHOLD        (255 * 0.05) // Consider a button released at 5%
+#define BUTTON_DOWN_THRESHOLD      (255 * 0.10) // Consider a button pressed at 10%
 
 /*** Encoders ***/
 #define ENCODER_CHANNELS_REVERSED

@@ -1,11 +1,25 @@
 // Jump table entry, used for process unrolling.
 #define _ANALOG_JUMP_TABLE(x) case x: if (x < ANALOG_CHANNELS_ACTIVE) _impl_analog_processChannel(x); return;
 
-// Stock calibration values.
-uint16_t up[BUTTONS_ACTIVE] = { BUTTON_CALIBRATION_UP };
-uint16_t down[BUTTONS_ACTIVE] = { BUTTON_CALIBRATION_DOWN };
+typedef struct {
+  uint16_t min;
+  uint16_t max;
+  uint8_t  invert;
+} _impl_calibration_t;
+
+#if defined(ANALOG_CHANNELS_ACTIVE) && (ANALOG_CHANNELS_ACTIVE > 0)
+static _impl_calibration_t _analog_calibration[ANALOG_CHANNELS_ACTIVE];
+#endif
 
 volatile uint8_t _analogs_index = 0;
+
+// Set calibration values for a specific analog channel.
+void _impl_analog_setCalibration(int i, uint16_t up, uint16_t down) {
+  if (i < 0 || i >= ANALOG_CHANNELS_ACTIVE) return;
+  _analog_calibration[i].min = up < down ? up : down;
+  _analog_calibration[i].max = up > down ? up : down;
+  _analog_calibration[i].invert = up > down;
+}
 
 // Sets up the IRQ handler on the second core and begin the first conversion
 int64_t _impl_analog_startConversion(alarm_id_t id, void *user_data) {
@@ -19,11 +33,12 @@ static inline void _impl_analog_processChannel(const uint8_t i) {
   uint16_t raw = adc_fifo_get();
 
   // Clamp to pre-calibrated range.
-  if (raw > up[i]) raw = up[i];
-  if (raw < down[i]) raw = down[i];
+  const _impl_calibration_t *c = &_analog_calibration[i];
+  if (raw < c->min) raw = c->min;
+  if (raw > c->max) raw = c->max;
 
   // Scale the raw value from 16-bit to 8-bit.
-  _analogs[i].raw = (raw - down[i]) * 255 / (up[i] - down[i]) ^ 0xFF;
+  _analogs[i].raw = (raw - c->min) * 255 / (c->max - c->min) ^ -c->invert;
 
   // Switch the ADC to the next channel
   const uint8_t next_index = (i+1) % ANALOG_CHANNELS_ACTIVE;
@@ -96,6 +111,14 @@ void _impl_analog_init(void) {
   // Setup switch pins
   gpio_init_mask(ANALOG_MAGNETIC_PIN_MASK);
   gpio_set_dir_out_masked(ANALOG_MAGNETIC_PIN_MASK);
+
+  // Copy stock calibration values
+  const uint16_t up[ANALOG_CHANNELS_ACTIVE] = { ANALOG_CALIBRATION_UP };
+  const uint16_t down[ANALOG_CHANNELS_ACTIVE] = { ANALOG_CALIBRATION_DOWN };
+
+  for (int i = 0; i < ANALOG_CHANNELS_ACTIVE; ++i) {
+    _impl_analog_setCalibration(i, up[i], down[i]);
+  }
 
   // Start the interupt handler on the second core. We'll use a single-fire timer to achieve this
   alarm_pool_add_alarm_in_us(
