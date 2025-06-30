@@ -51,7 +51,7 @@ static inline void _impl_analog_processChannel(const uint8_t i) {
   // Start the next conversion after a brief delay
   alarm_pool_add_alarm_in_us(
     _impl_arch_alarmPool(),
-    1,
+    10,
     _impl_analog_startConversion,
     NULL,
     true
