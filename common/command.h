@@ -2,12 +2,14 @@
 
 #include "command/defs.h"
 #include "command/reset.h"
+#include "command/calibrate.h"
 
 /*** Declarations ***/
 // Storage for the current command report
 extern CommandReport_t _command;
 
 static const _cmd_handler_t handlers[] = {
+  { .id = 0x00, .perform = CalibrateGetCommand_Perform },
   { .id = 0xFF, .perform = ResetCommand_Perform },
 };
 

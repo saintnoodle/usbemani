@@ -1,14 +1,8 @@
 // Jump table entry, used for process unrolling.
 #define _ANALOG_JUMP_TABLE(x) case x: if (x < ANALOG_CHANNELS_ACTIVE) _impl_analog_processChannel(x); return;
 
-typedef struct {
-  uint16_t min;
-  uint16_t max;
-  uint8_t  invert;
-} _impl_calibration_t;
-
 #if defined(ANALOG_CHANNELS_ACTIVE) && (ANALOG_CHANNELS_ACTIVE > 0)
-static _impl_calibration_t _analog_calibration[ANALOG_CHANNELS_ACTIVE];
+_impl_calibration_t _analog_calibration[ANALOG_CHANNELS_ACTIVE];
 #endif
 
 volatile uint8_t _analogs_index = 0;
@@ -32,8 +26,11 @@ static inline void _impl_analog_processChannel(const uint8_t i) {
   // Read the raw value from the ADC FIFO.
   uint16_t raw = adc_fifo_get();
 
+  // Keep a copy of the latest raw value.
+  _impl_calibration_t *c = &_analog_calibration[i];
+  c->last = raw;
+
   // Clamp to pre-calibrated range.
-  const _impl_calibration_t *c = &_analog_calibration[i];
   if (raw < c->min) raw = c->min;
   if (raw > c->max) raw = c->max;
 
