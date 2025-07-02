@@ -2,7 +2,7 @@
 #define _ANALOG_JUMP_TABLE(x) case x: if (x < ANALOG_CHANNELS_ACTIVE) _impl_analog_processChannel(x); return;
 
 #if defined(ANALOG_CHANNELS_ACTIVE) && (ANALOG_CHANNELS_ACTIVE > 0)
-_impl_calibration_t _analog_calibration[ANALOG_CHANNELS_ACTIVE];
+_impl_magnetic_calibration_t _magnetic_calibration[ANALOG_CHANNELS_ACTIVE];
 #endif
 
 volatile uint8_t _analogs_index = 0;
@@ -10,9 +10,9 @@ volatile uint8_t _analogs_index = 0;
 // Set calibration values for a specific analog channel.
 void _impl_analog_setCalibration(int i, uint16_t up, uint16_t down) {
   if (i < 0 || i >= ANALOG_CHANNELS_ACTIVE) return;
-  _analog_calibration[i].min = up < down ? up : down;
-  _analog_calibration[i].max = up > down ? up : down;
-  _analog_calibration[i].invert = up > down;
+  _magnetic_calibration[i].min = up < down ? up : down;
+  _magnetic_calibration[i].max = up > down ? up : down;
+  _magnetic_calibration[i].invert = up > down;
 }
 
 // Sets up the IRQ handler on the second core and begin the first conversion
@@ -27,7 +27,7 @@ static inline void _impl_analog_processChannel(const uint8_t i) {
   uint16_t raw = adc_fifo_get();
 
   // Keep a copy of the latest raw value.
-  _impl_calibration_t *c = &_analog_calibration[i];
+  _impl_magnetic_calibration_t *c = &_magnetic_calibration[i];
   c->last = raw;
 
   // Clamp to pre-calibrated range.

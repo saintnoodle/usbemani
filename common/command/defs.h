@@ -19,14 +19,9 @@ typedef struct {
   USB_CommandResponse_t response; // Response to send back to the host
 } CommandReport_t;
 
-// command handler function type - reads ->request and populate ->response
-typedef bool (*_cmd_perform_t) (CommandReport_t* command);
-
-// callback invoked after sending usb data - primarily useful for things like
-// the reset command which would otherwise be unable to respond to the request
-typedef void (*_cmd_finalize_t) (CommandReport_t* command);
+typedef bool (*_cmd_exec_t) (CommandReport_t* command);
 
 typedef struct {
-  uint8_t id;               // Command ID
-  _cmd_perform_t perform;   // Function to perform the command
+  uint8_t id;
+  _cmd_exec_t exec;
 } _cmd_handler_t;
