@@ -149,7 +149,7 @@ const USB_DEVICE USB_ATTRIBUTES USBemani_Device = {
   .bcdDevice        = 0x0100,
   .iManufacturer    = StringID_Vendor_USBemani,
   .iProduct         = StringID_Product_USBemani,
-  .iSerialNumber    = StringID_None,
+  .iSerialNumber    = StringID_Serial,
   .bNumConfigurations = 1
 };
 

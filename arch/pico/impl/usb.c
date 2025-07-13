@@ -1,5 +1,6 @@
 #include "usb.h"
 #include "usb/descriptors.c"
+#include "pico/unique_id.h"
 
 void _impl_hid_init(void) {
   tusb_init();
@@ -164,7 +165,23 @@ const uint16_t *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
   switch(type) {
   case StringType_USBStandard:
-    string = String_USB[stridx];
+    if (stridx == StringID_Serial) {
+      static bool generated = false;
+      static uint16_t serial[1 + (2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES)];
+
+      if (!generated) {
+        generated = true;
+        char id[2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1];
+        pico_get_unique_board_id_string(id, sizeof(id));
+        serial[0] = (TUSB_DESC_STRING << 8) | (2 + strlen(id) * 2);
+        for (size_t i = 0; i < strlen(id); i++) {
+          serial[1 + i] = id[i];
+        }
+      }
+      string = (USB_STRING*) serial;
+    } else {
+      string = String_USB[stridx];
+    }
     break;
   case StringType_Button:
     string = String_Button[stridx];

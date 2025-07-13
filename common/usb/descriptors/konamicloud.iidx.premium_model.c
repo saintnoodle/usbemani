@@ -14,7 +14,7 @@ const USB_DEVICE USB_ATTRIBUTES KonamiCloud_Device = {
   .bcdDevice        = 0x0100,
   .iManufacturer    = StringID_Vendor_KonamiCloud,            // 1
   .iProduct         = StringID_Product_KonamiCloud,           // 2
-  .iSerialNumber    = StringID_None,                          // 0
+  .iSerialNumber    = StringID_Serial,                        // 0
   .bNumConfigurations = 1
 };
 
