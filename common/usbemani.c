@@ -1,4 +1,7 @@
 #include "usbemani.h"
+#include "settings.h"
+
+Settings_t _settings;
 
 TimerTick_t _timer;
 HSV_Color_t _effect_global;
@@ -12,6 +15,10 @@ CommandReport_t _command = {
 };
 
 int main(void) {
+  // Read & write settings
+  Flash_Init();
+  Flash_Read();
+
   // Initialize hardware
   Arch_Init();
   Analog_Init();

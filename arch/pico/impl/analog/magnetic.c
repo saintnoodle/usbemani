@@ -2,7 +2,7 @@
 #define _ANALOG_JUMP_TABLE(x) case x: if (x < ANALOG_CHANNELS_ACTIVE) _impl_analog_processChannel(x); return;
 
 #if defined(ANALOG_CHANNELS_ACTIVE) && (ANALOG_CHANNELS_ACTIVE > 0)
-_impl_magnetic_calibration_t _magnetic_calibration[ANALOG_CHANNELS_ACTIVE];
+_impl_magnetic_t _magnetic[ANALOG_CHANNELS_ACTIVE];
 #endif
 
 volatile uint8_t _analogs_index = 0;
@@ -10,9 +10,9 @@ volatile uint8_t _analogs_index = 0;
 // Set calibration values for a specific analog channel.
 void _impl_analog_setCalibration(int i, uint16_t up, uint16_t down) {
   if (i < 0 || i >= ANALOG_CHANNELS_ACTIVE) return;
-  _magnetic_calibration[i].min = up < down ? up : down;
-  _magnetic_calibration[i].max = up > down ? up : down;
-  _magnetic_calibration[i].invert = up > down;
+  _settings.analog.min[i] = up < down ? up : down;
+  _settings.analog.max[i] = up > down ? up : down;
+  _settings.analog.invert |= (up > down) << i;
 }
 
 // Sets up the IRQ handler on the second core and begin the first conversion
@@ -27,15 +27,18 @@ static inline void _impl_analog_processChannel(const uint8_t i) {
   uint16_t raw = adc_fifo_get();
 
   // Keep a copy of the latest raw value.
-  _impl_magnetic_calibration_t *c = &_magnetic_calibration[i];
-  c->last = raw;
+  _magnetic[i].raw = raw;
 
   // Clamp to pre-calibrated range.
-  if (raw < c->min) raw = c->min;
-  if (raw > c->max) raw = c->max;
+  const uint16_t min = _settings.analog.min[i];
+  const uint16_t max = _settings.analog.max[i];
+  const bool invert = (_settings.analog.invert >> i) & 1;
+
+  if (raw < min) raw = min;
+  if (raw > max) raw = max;
 
   // Scale the raw value from 16-bit to 8-bit.
-  _analogs[i].raw = (raw - c->min) * 255 / (c->max - c->min) ^ -c->invert;
+  _analogs[i].raw = (raw - min) * 255 / (max - min) ^ -invert;
 
   // Switch the ADC to the next channel
   const uint8_t next_index = (i+1) % ANALOG_CHANNELS_ACTIVE;
@@ -108,14 +111,6 @@ void _impl_analog_init(void) {
   // Setup switch pins
   gpio_init_mask(ANALOG_MAGNETIC_PIN_MASK);
   gpio_set_dir_out_masked(ANALOG_MAGNETIC_PIN_MASK);
-
-  // Copy stock calibration values
-  const uint16_t up[ANALOG_CHANNELS_ACTIVE] = { ANALOG_CALIBRATION_UP };
-  const uint16_t down[ANALOG_CHANNELS_ACTIVE] = { ANALOG_CALIBRATION_DOWN };
-
-  for (int i = 0; i < ANALOG_CHANNELS_ACTIVE; ++i) {
-    _impl_analog_setCalibration(i, up[i], down[i]);
-  }
 
   // Start the interupt handler on the second core. We'll use a single-fire timer to achieve this
   alarm_pool_add_alarm_in_us(

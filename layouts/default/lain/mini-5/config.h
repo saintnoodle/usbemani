@@ -1,9 +1,5 @@
 #pragma once
 
-/*** Analogs ***/
-#define ANALOG_CALIBRATION_UP      2340, 2302, 2368, 2369, 2389, 2291, 2320, 2401, 2305, 2288, 2322
-#define ANALOG_CALIBRATION_DOWN    4011, 3920, 4035, 4043, 4033, 3938, 3843, 4054, 4053, 3998, 3999
-
 /*** Buttons ***/
 #define BUTTON_UP_THRESHOLD        (255 * 0.05) // Consider a button released at 5%
 #define BUTTON_DOWN_THRESHOLD      (255 * 0.10) // Consider a button pressed at 10%

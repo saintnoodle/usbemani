@@ -25,5 +25,7 @@
 
 #define USB_CMD_REPORT_SIZE 64
 
+#define FLASH_TARGET_OFFSET (1024 * 1024)
+
 /*** Chain Inclusion ***/
 #include_next "config.h"

@@ -13,8 +13,8 @@ extern CommandReport_t _command;
 
 static const _cmd_handler_t handlers[] = {
 #if defined(ANALOG_DRIVER_MAGNETIC)
-  { .id = 0x00, .exec = CalibrateGetCommand_Exec },
-  { .id = 0x01, .exec = CalibrateSetCommand_Exec },
+  { .id = 0x01, .exec = CalibrateGetCommand_Exec },
+  { .id = 0x02, .exec = CalibrateSetCommand_Exec },
 #endif
   { .id = 0xFF, .exec = ResetCommand_Exec },
 };

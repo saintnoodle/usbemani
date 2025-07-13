@@ -1,6 +1,7 @@
 #pragma once
 
 #include "arch.h"
+#include "flash.h"
 #include "analog.h"
 #include "button.h"
 #include "color.h"

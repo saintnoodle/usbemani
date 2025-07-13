@@ -1,6 +1,7 @@
 #pragma once
 
 #include "analog.h"
+#include "settings.h"
 
 typedef enum {
   CalibrateType_Up = 0,
@@ -21,12 +22,13 @@ static inline bool CalibrateGetCommand_Exec(CommandReport_t* command) {
   _cmd_calibrate_get_response_t* response = (_cmd_calibrate_get_response_t*) command->response.data;
 
   for (int i = 0; i < ANALOG_CHANNELS_ACTIVE; i++) {
+    const bool inverted = (_settings.analog.invert >> i) & 1;
     if (request->type == CalibrateType_Up) {
-      response->value[i] = _magnetic_calibration[i].invert ? _magnetic_calibration[i].max : _magnetic_calibration[i].min;
+      response->value[i] = inverted ? _settings.analog.max[i] : _settings.analog.min[i];
     } else if (request->type == CalibrateType_Down) {
-      response->value[i] = _magnetic_calibration[i].invert ? _magnetic_calibration[i].min : _magnetic_calibration[i].max;
+      response->value[i] = inverted ? _settings.analog.min[i] : _settings.analog.max[i];
     } else if (request->type == CalibrateType_Raw) {
-      response->value[i] = _magnetic_calibration[i].last;
+      response->value[i] = _magnetic[i].raw;
     }
   }
 
