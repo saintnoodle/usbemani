@@ -1,6 +1,7 @@
 #pragma once
 
 #include "command/defs.h"
+#include "command/version.h"
 #include "command/reset.h"
 
 #if defined(ANALOG_DRIVER_MAGNETIC)
@@ -12,6 +13,7 @@
 extern CommandReport_t _command;
 
 static const _cmd_handler_t handlers[] = {
+  { .id = 0x00, .exec = VersionCommand_Exec },
 #if defined(ANALOG_DRIVER_MAGNETIC)
   { .id = 0x01, .exec = CalibrateGetCommand_Exec },
   { .id = 0x02, .exec = CalibrateSetCommand_Exec },
