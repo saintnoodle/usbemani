@@ -1,0 +1,46 @@
+#include "usbemani.h"
+
+#define BUTTON_OFFSET_KEYS 7
+
+// Animations
+#define ANIMATION_RIPPLE_ENABLED
+#define ANIMATION_RIPPLE_IDLE_ENABLED
+#define ANIMATION_TWINKLE_ENABLED
+#undef ANIMATION_SCAN_ENABLED
+
+// Lighting
+#define LIGHTING_CLAMP_VALUE 64
+#define LIGHTING_MAX_KEY_BRIGHTNESS 42
+#define LIGHTING_MIN_KEY_BRIGHTNESS 5
+#define LIGHTING_MAX_TT_BRIGHTNESS 192
+#define LIGHTING_MIN_TT_BRIGHTNESS 5
+
+// Animation Config
+// Ripple
+#define ANIMATION_RIPPLE_MAX_BRIGHTNESS 24
+#define ANIMATION_RIPPLE_MAX_RIPPLES 12
+#define ANIMATION_RIPPLE_SPEED 24
+
+#define ANIMATION_RIPPLE_SPEED_IDLE 180
+#define ANIMATION_RIPPLE_INTERVAL_IDLE_MIN 360
+#define ANIMATION_RIPPLE_INTERVAL_IDLE_MAX 2000
+
+// Scan
+#define ANIMATION_SCAN_MAX_CYCLES 7
+#define ANIMATION_SCAN_SPEED 125
+
+// Twinkle
+#define ANIMATION_TWINKLE_STEP_DURATION 30
+#define ANIMATION_TWINKLE_PROBABILITY 25
+#define ANIMATION_TWINKLE_MIN_LIFE 20
+#define ANIMATION_TWINKLE_MAX_LIFE 50
+
+// Idle
+#define IDLE_TIMEOUT_SEC 10
+
+// Key Colours
+// Create colours via multiplication of the analog value
+#define BLACK_KEY_WEIGHT ((RGB_Color_t){.r = 0, .g = 255, .b = 51})
+#define WHITE_KEY_WEIGHT ((RGB_Color_t){.r = 255, .g = 0, .b = 42})
+#define E_KEY_WEIGHT ((RGB_Color_t){.r = 0, .g = 64, .b = 255})
+#define START_KEY_WEIGHT ((RGB_Color_t){.r = 0, .g = 0, .b = 255})
