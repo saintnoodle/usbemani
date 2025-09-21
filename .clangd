@@ -1,0 +1,9 @@
+If:
+    PathMatch: /usr/share/.*
+Index:
+    Background: Skip
+
+---
+
+Diagnostics:
+    UnusedIncludes: None

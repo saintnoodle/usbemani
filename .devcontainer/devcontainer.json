@@ -1,0 +1,23 @@
+{
+  "name": "usbemani-env",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/usbemani",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/usbemani,type=bind,consistency=cached",
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cmake-tools",
+        "llvm-vs-code-extensions.vscode-clangd"
+      ],      
+      "terminal.integrated.profiles.linux": {
+        "bash": {
+          "path": "/bin/bash"
+        }
+      },
+      "terminal.integrated.defaultProfile.linux": "bash"
+    }
+  }
+}
