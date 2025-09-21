@@ -5,8 +5,6 @@
   },
   "workspaceFolder": "/usbemani",
   "workspaceMount": "source=${localWorkspaceFolder},target=/usbemani,type=bind,consistency=cached",
-  "remoteUser": "builder",
-  "containerUser": "builder",
   "updateRemoteUserUID": true,
   "customizations": {
     "vscode": {
