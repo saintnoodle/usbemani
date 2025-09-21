@@ -13,13 +13,13 @@
       "extensions": [
         "ms-vscode.cmake-tools",
         "llvm-vs-code-extensions.vscode-clangd"
-      ],
-      "terminal.integrated.defaultProfile.linux": "bash",
+      ],      
       "terminal.integrated.profiles.linux": {
         "bash": {
           "path": "/bin/bash"
         }
-      }
+      },
+      "terminal.integrated.defaultProfile.linux": "bash"
     }
   }
 }
