@@ -29,7 +29,7 @@ enum IdleNewState { ACTIVE, IDLE, UNCHANGED };
 typedef struct {
   _Bool is_idle;
   TimerTick_t last_active;
-  uint16_t timeout;
+  const uint16_t timeout;
 } IdleState_t;
 
 typedef struct {
@@ -38,3 +38,12 @@ typedef struct {
   uint16_t max_life;
   TimerTick_t last_tick;
 } TwinkleState_t;
+
+enum SpinDirection_t { CW, CCW };
+
+typedef struct {
+  uint16_t pos;
+  const uint16_t loop_duration;
+  const uint16_t led_start_pos;
+  const enum SpinDirection_t direction;
+} SweepState_t;

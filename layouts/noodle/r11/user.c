@@ -1,7 +1,5 @@
 #include "user.h"
-#include "color/defs.h"
 #include "gamma8.h"
-#include <stdint.h>
 
 // --- Buffer ---
 
@@ -28,10 +26,12 @@ void bufferAdd(uint8_t index, RGB_Color_t color) {
   led_buffer[index].b += color.b;
 }
 
-void bufferSub(uint8_t index, RGB_Color_t color) {
-  led_buffer[index].r -= color.r;
-  led_buffer[index].g -= color.g;
-  led_buffer[index].b -= color.b;
+void bufferAddRange(uint8_t start, uint8_t end, RGB_Color_t color) {
+  for (uint8_t i = start; i < end; i++) {
+    led_buffer[i].r += color.r;
+    led_buffer[i].g += color.g;
+    led_buffer[i].b += color.b;
+  }
 }
 
 void bufferRender() {
@@ -119,11 +119,7 @@ uint8_t calculateBreathe(uint16_t phase, uint16_t max_phase) {
   y = (y * 220) / 1000;
   y += 34;
 
-  if (y > 255) {
-    y = 255;
-  }
-
-  return (uint8_t)y;
+  return y > 255 ? 255 : (uint8_t)y;
 }
 
 uint8_t scale(uint16_t value, uint8_t scale) { return (value * scale) >> 8; }
@@ -177,6 +173,93 @@ void twinkleUpdate(TwinkleState_t state[]) {
   }
 }
 
+static SweepState_t SweepState = {
+    .pos = 0,
+    .loop_duration = (RGB_FRAMERATE_TARGET * 5),
+    .direction = CW,
+    .led_start_pos = 96,
+};
+
+uint8_t sweepGetRealIndex(uint8_t index) {
+  if (SweepState.direction == CW) {
+    return (CONTROLLER_RGB_LEDS_TURNTABLE - 1 - index +
+            (SweepState.led_start_pos * CONTROLLER_RGB_LEDS_TURNTABLE / 256)) %
+           CONTROLLER_RGB_LEDS_TURNTABLE;
+  } else {
+    return (index +
+            (SweepState.led_start_pos * CONTROLLER_RGB_LEDS_TURNTABLE / 256)) %
+           CONTROLLER_RGB_LEDS_TURNTABLE;
+  }
+}
+
+uint8_t sweepGetLEDBrightness(uint16_t progress, uint16_t led_start,
+                              uint16_t led_duration, bool reverse) {
+  if (progress >= led_start + led_duration) {
+    return reverse ? 0 : 255;
+  }
+
+  if (progress >= led_start) {
+    uint16_t led_progress = progress - led_start;
+    uint8_t led_progress_normalised = (led_progress * 255) / led_duration;
+
+    if (reverse) {
+      return Gamma(255 - led_progress_normalised);
+    }
+
+    return Gamma(led_progress_normalised);
+  }
+
+  return reverse ? 255 : 0;
+}
+
+void sweepReset() { SweepState.pos = 0; }
+
+void sweepRun(uint16_t progress, uint16_t led_duration, bool reverse) {
+  for (uint8_t i = 0; i < CONTROLLER_RGB_LEDS_TURNTABLE; i++) {
+    uint8_t effective_i = sweepGetRealIndex(i);
+    uint16_t led_start = i * led_duration;
+
+    uint8_t brightness =
+        sweepGetLEDBrightness(progress, led_start, led_duration, reverse);
+
+    if (brightness > 0) {
+      bufferAdd(LED_INDEX_START_TT + effective_i,
+                (RGB_Color_t){.r = scale(255, brightness),
+                              .g = scale(255, brightness),
+                              .b = scale(255, brightness)});
+    }
+  }
+}
+
+void sweepUpdate() {
+  uint8_t phase = SweepState.pos / (SweepState.loop_duration / 4);
+  uint32_t phase_duration = SweepState.loop_duration / 4;
+  uint32_t phase_progress = SweepState.pos % phase_duration;
+
+  uint32_t led_duration = (phase_duration / CONTROLLER_RGB_LEDS_TURNTABLE) / 2;
+
+  switch (phase) {
+  case 0: {
+    sweepRun(phase_progress, led_duration, false);
+    break;
+  }
+  case 1: {
+    // Simply turn all LEDs on
+    bufferAddRange(LED_INDEX_START_TT, CONTROLLER_RGB_LEDS_TURNTABLE,
+                   (RGB_Color_t){.r = 192, .g = 192, .b = 192});
+    break;
+  }
+  case 2: {
+    sweepRun(phase_progress, led_duration, true);
+  } break;
+  }
+
+  SweepState.pos++;
+  if (SweepState.pos >= SweepState.loop_duration) {
+    sweepReset();
+  }
+}
+
 // Spread the key's analog value outward from the centre LED
 void analogSpread(uint8_t button, RGB_Color_t color) {
   const uint8_t value = Analog_Get(button);
@@ -220,16 +303,16 @@ void analogSpread(uint8_t button, RGB_Color_t color) {
   const uint8_t led_start = button * CONTROLLER_RGB_LEDS_PER_KEY;
 
   // Start with centre LED
-  bufferSet(led_start + 3, colors[0]);
+  bufferAdd(led_start + 3, colors[0]);
 
-  bufferSet(led_start + 2, colors[1]);
-  bufferSet(led_start + 4, colors[1]);
+  bufferAdd(led_start + 2, colors[1]);
+  bufferAdd(led_start + 4, colors[1]);
 
-  bufferSet(led_start + 1, colors[2]);
-  bufferSet(led_start + 5, colors[2]);
+  bufferAdd(led_start + 1, colors[2]);
+  bufferAdd(led_start + 5, colors[2]);
 
-  bufferSet(led_start, colors[3]);
-  bufferSet(led_start + 6, colors[3]);
+  bufferAdd(led_start, colors[3]);
+  bufferAdd(led_start + 6, colors[3]);
 }
 
 // --- Callbacks ---
@@ -244,6 +327,7 @@ void CALLBACK_RGBCalculateNextFrame() {
 
   if (idle_state_update == ACTIVE) {
     twinkleReset(TwinkleState);
+    sweepReset();
   }
 
   if (IdleState.is_idle) {
@@ -262,7 +346,7 @@ void CALLBACK_RGBCalculateNextFrame() {
     }
 
     // Set TT to a static colour
-    bufferSetRange(LED_INDEX_START_TT, CONTROLLER_RGB_LEDS_TURNTABLE,
+    bufferAddRange(LED_INDEX_START_TT, CONTROLLER_RGB_LEDS_TURNTABLE,
                    (RGB_Color_t){.r = 255, .g = 255, .b = 255});
   }
 }
