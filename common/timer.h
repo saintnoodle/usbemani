@@ -2,7 +2,7 @@
 #include "impl/timer.h"
 
 typedef struct {
-  uint16_t ticks;
+  uint32_t ticks;
 } TimerTick_t;
 
 extern TimerTick_t _timer;
