@@ -18,7 +18,7 @@
 #define LED_BUFFER_SIZE                                                        \
   (LED_COUNT_PLAY + LED_COUNT_EFFECT + CONTROLLER_RGB_LEDS_TURNTABLE)
 
-#define IDLE_TIMEOUT_SECS 15
+#define IDLE_TIMEOUT_SECS 20
 
 #define TWINKLE_PROBABILITY 3
 #define TWINKLE_MIN_LIFE 600
@@ -47,3 +47,7 @@ typedef struct {
   const uint16_t led_start_pos;
   const enum SpinDirection_t direction;
 } SweepState_t;
+
+extern RGB_Color_t lighting_buf[LED_BUFFER_SIZE];
+extern IdleState_t IdleState;
+extern TwinkleState_t TwinkleState[LED_COUNT_KEYS];

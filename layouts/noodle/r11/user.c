@@ -1,21 +1,20 @@
 #include "user.h"
-#include "config.h"
+#include "usbemani.h"
 
 // --- Buffer ---
 
-static RGB_Color_t led_buffer[LED_BUFFER_SIZE] = {};
+RGB_Color_t led_buffer[LED_BUFFER_SIZE];
 
 void bufferReset() {
   for (uint8_t i = 0; i < LED_BUFFER_SIZE; i++) {
-    RGB_Color_t color = {0};
-    led_buffer[i] = color;
+    led_buffer[i] = (RGB_Color_t){0};
   }
 }
 
 void bufferSet(uint8_t index, RGB_Color_t color) { led_buffer[index] = color; }
 
-void bufferSetRange(uint8_t start, uint8_t end, RGB_Color_t color) {
-  for (uint8_t i = start; i < end; i++) {
+void bufferSetRange(uint8_t start, uint8_t count, RGB_Color_t color) {
+  for (uint8_t i = start; i < count; i++) {
     led_buffer[i] = color;
   }
 }
@@ -26,8 +25,8 @@ void bufferAdd(uint8_t index, RGB_Color_t color) {
   led_buffer[index].b += color.b;
 }
 
-void bufferAddRange(uint8_t start, uint8_t end, RGB_Color_t color) {
-  for (uint8_t i = start; i < end; i++) {
+void bufferAddRange(uint8_t start, uint8_t count, RGB_Color_t color) {
+  for (uint8_t i = start; i < count; i++) {
     led_buffer[i].r += color.r;
     led_buffer[i].g += color.g;
     led_buffer[i].b += color.b;
@@ -46,7 +45,7 @@ void bufferRender() {
   }
 
   for (uint8_t i = 0; i < CONTROLLER_RGB_LEDS_TURNTABLE; i++) {
-    RGB_Set(0, i, led_buffer[i + LED_INDEX_START_TT]);
+    RGB_Set(0, i + LED_INDEX_START_TT, led_buffer[i + LED_INDEX_START_TT]);
   }
 
   bufferReset();
@@ -76,54 +75,50 @@ const uint8_t gamma8[] = {
 
 uint8_t gammaCorrect(uint8_t value) { return gamma8[value]; };
 RGB_Color_t gammaCorrectRGB(RGB_Color_t color) {
-  RGB_Color_t new_color = {};
-
-  new_color.r = gamma8[color.r];
-  new_color.g = gamma8[color.g];
-  new_color.b = gamma8[color.b];
-
-  return new_color;
+  return (RGB_Color_t){
+      .r = gamma8[color.r], .g = gamma8[color.g], .b = gamma8[color.b]};
 };
 
 // --- Idle ---
 
-static IdleState_t IdleState = {.is_idle = false,
-                                .last_active = {.ticks = 0},
-                                .timeout = IDLE_TIMEOUT_SECS * 1000};
+IdleState_t IdleState = {.is_idle = false,
+                         .last_active = {.ticks = 0},
+                         .timeout = IDLE_TIMEOUT_SECS * 1000};
 
-void idleReset(IdleState_t state) {
-  state.is_idle = false;
-  state.last_active.ticks = Timer_GetTicks();
+void idleReset() {
+  IdleState.is_idle = false;
+  IdleState.last_active.ticks = Timer_GetTicks();
 }
 
 /// Will return an enum to allow for conditional code execusion on state change
-enum IdleNewState idleUpdate(IdleState_t state) {
+enum IdleNewState idleUpdate() {
   enum IdleNewState new_state = UNCHANGED;
 
   if (Encoder_Direction(0)) {
-    if (state.is_idle) {
+    if (IdleState.is_idle) {
       new_state = ACTIVE;
     }
 
-    idleReset(state);
+    idleReset();
     return new_state;
   }
 
   for (uint8_t i = 0; i < BUTTONS_AVAILABLE; i++) {
-    if (state.is_idle) {
+    if (IdleState.is_idle) {
       new_state = ACTIVE;
     }
     if (Analog_Get(i) > 5) {
-      idleReset(state);
+      idleReset();
       return new_state;
     }
   }
 
-  if (Timer_EveryDurationInMs(&state.last_active, state.timeout) &&
-      !state.is_idle) {
-    new_state = IDLE;
+  if (!IdleState.is_idle) {
+    if (Timer_EveryDurationInMs(&IdleState.last_active, IdleState.timeout)) {
+      new_state = IDLE;
 
-    state.is_idle = true;
+      IdleState.is_idle = true;
+    }
   }
 
   return new_state;
@@ -145,11 +140,9 @@ uint8_t generateRandomValueClamped(uint8_t min, uint8_t max) {
 }
 
 RGB_Color_t generateRandomColor(uint8_t min, uint8_t max) {
-  RGB_Color_t color = {.r = generateRandomValueClamped(min, max),
+  return (RGB_Color_t){.r = generateRandomValueClamped(min, max),
                        .g = generateRandomValueClamped(min, max),
                        .b = generateRandomValueClamped(min, max)};
-
-  return color;
 }
 
 uint8_t calculateBreathe(uint16_t phase, uint16_t max_phase) {
@@ -171,53 +164,53 @@ uint8_t scale(uint16_t value, uint8_t scale) { return (value * scale) >> 8; }
 // --- Effects ---
 
 // Assign twinkle effect state across the keys' LEDs
-static TwinkleState_t TwinkleState[LED_COUNT_KEYS] = {};
+TwinkleState_t TwinkleState[LED_COUNT_KEYS];
 
-void twinkleReset(TwinkleState_t state[]) {
+void twinkleReset() {
   for (uint8_t i = 0; i < LED_COUNT_KEYS; i++) {
-    state[i].color = (RGB_Color_t){};
-    state[i].life = 0;
-    state[i].max_life = 0;
-    state[i].last_tick.ticks = Timer_GetTicks();
+    TwinkleState[i].color = (RGB_Color_t){0};
+    TwinkleState[i].life = 0;
+    TwinkleState[i].max_life = 0;
+    TwinkleState[i].last_tick.ticks = Timer_GetTicks();
   }
 }
 
-void twinkleUpdate(TwinkleState_t state[]) {
+void twinkleUpdate() {
   for (uint8_t i = 0; i < LED_COUNT_KEYS; i++) {
-    TwinkleState_t *led = &(TwinkleState[i]);
+    TwinkleState_t led = TwinkleState[i];
 
-    if (led->life > 0) {
-      led->life--;
+    if (led.life > 0) {
+      led.life--;
 
-      if (led->life == 0) {
+      if (led.life == 0) {
         continue;
       }
 
-      uint8_t breathe = calculateBreathe(led->life, led->max_life);
+      uint8_t breathe = calculateBreathe(led.life, led.max_life);
       uint8_t brightness = gammaCorrect(breathe);
-      RGB_Color_t new_color = {.r = scale(led->color.r, brightness),
-                               .g = scale(led->color.g, brightness),
-                               .b = scale(led->color.b, brightness)};
+      RGB_Color_t new_color = {.r = scale(led.color.r, brightness),
+                               .g = scale(led.color.g, brightness),
+                               .b = scale(led.color.b, brightness)};
 
       bufferAdd(i, new_color);
     } else {
       if (Utils_Random() < TWINKLE_PROBABILITY) {
         uint16_t range = TWINKLE_MAX_LIFE - TWINKLE_MIN_LIFE;
-        led->max_life = TWINKLE_MIN_LIFE + (Utils_Random() & (range + 1));
-        led->life = led->max_life;
+        led.max_life = TWINKLE_MIN_LIFE + (Utils_Random() & (range + 1));
+        led.life = led.max_life;
 
         uint8_t minBrightness = 64;
         uint8_t maxBrightness = 192;
 
-        led->color.r = generateRandomValueClamped(minBrightness, maxBrightness);
-        led->color.g = generateRandomValueClamped(minBrightness, maxBrightness);
-        led->color.b = generateRandomValueClamped(minBrightness, maxBrightness);
+        led.color.r = generateRandomValueClamped(minBrightness, maxBrightness);
+        led.color.g = generateRandomValueClamped(minBrightness, maxBrightness);
+        led.color.b = generateRandomValueClamped(minBrightness, maxBrightness);
       }
     }
   }
 }
 
-static SweepState_t SweepState = {
+SweepState_t SweepState = {
     .pos = 0,
     .loop_duration = (RGB_FRAMERATE_TARGET * 5),
     .direction = CW,
@@ -313,34 +306,26 @@ void analogSpread(uint8_t button, RGB_Color_t color) {
   }
 
   // Four segments across seven LEDs
-  RGB_Color_t colors[4] = {};
+  RGB_Color_t colors[4];
   const uint8_t segment_size = UINT8_MAX / 4;
 
   // Calculate segments
   for (uint8_t i = 0; i < 4; i++) {
-    RGB_Color_t color_scaled = {};
+    uint8_t brightness = 0;
     int16_t lower = i * segment_size;
     int16_t upper = lower + segment_size;
 
     if (value >= upper) {
-      uint8_t brightness = segment_size * 2;
-
-      color_scaled.r = scale(color.r, brightness);
-      color_scaled.g = scale(color.g, brightness);
-      color_scaled.b = scale(color.b, brightness);
-
-      colors[i] = color_scaled;
+      brightness = segment_size * 2;
     } else if (value > lower) {
-      uint8_t brightness = (value - lower) * 2;
-
-      color_scaled.r = scale(color.r, brightness);
-      color_scaled.g = scale(color.g, brightness);
-      color_scaled.b = scale(color.b, brightness);
-
-      colors[i] = color_scaled;
+      brightness = (value - lower) * 2;
     } else {
-      colors[i] = color_scaled;
+      continue;
     }
+
+    colors[i] = (RGB_Color_t){.r = scale(color.r, brightness),
+                              .g = scale(color.g, brightness),
+                              .b = scale(color.b, brightness)};
   }
 
   // Place values into buffer
@@ -363,30 +348,30 @@ void analogSpread(uint8_t button, RGB_Color_t color) {
 
 void CALLBACK_OnHardwareReady() {
   bufferReset();
-  twinkleReset(TwinkleState);
+  twinkleReset();
 }
 
 void CALLBACK_RGBCalculateNextFrame() {
-  enum IdleNewState idle_state_update = idleUpdate(IdleState);
+  enum IdleNewState idle_state_update = idleUpdate();
 
   if (idle_state_update == ACTIVE) {
-    twinkleReset(TwinkleState);
+    twinkleReset();
     sweepReset();
   }
 
   if (IdleState.is_idle) {
     // Run idle effects
-    twinkleUpdate(TwinkleState);
+    twinkleUpdate();
   } else {
     // Run analog spread effect across keys
-    for (uint8_t i = 0; i < LED_COUNT_PLAY; i++) {
-      analogSpread(i, (RGB_Color_t){.r = 192, .g = 192, .b = 192});
+    for (uint8_t i = 0; i < KEY_COUNT_PLAY; i++) {
+      analogSpread(i, (RGB_Color_t){.r = 128, .g = 128, .b = 128});
     }
 
     // Run analog spread effect across effect keys
-    for (uint8_t i = 0; i < LED_COUNT_EFFECT; i++) {
+    for (uint8_t i = 0; i < KEY_COUNT_EFFECT; i++) {
       analogSpread(i + KEY_INDEX_START_EFFECT,
-                   (RGB_Color_t){.r = 192, .g = 192, .b = 192});
+                   (RGB_Color_t){.r = 128, .g = 128, .b = 128});
     }
 
     // Set TT to a static colour
@@ -404,7 +389,7 @@ void CALLBACK_OnRGBDrawFallback() {
 void CALLBACK_OnRGBDrawUSB(USB_OutputReport_t *output) {
   RGB_ClearAll(0);
 
-  for (int i = 0; i < KEY_COUNT_PLAY; i++) {
+  for (uint8_t i = 0; i < KEY_COUNT_PLAY; i++) {
     RGB_SetRange(0, (i * CONTROLLER_RGB_LEDS_PER_KEY),
                  CONTROLLER_RGB_LEDS_PER_KEY, output->rgb[i]);
   }
