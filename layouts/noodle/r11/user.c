@@ -1,5 +1,5 @@
 #include "user.h"
-#include "gamma8.h"
+#include "config.h"
 
 // --- Buffer ---
 
@@ -35,11 +35,55 @@ void bufferAddRange(uint8_t start, uint8_t end, RGB_Color_t color) {
 }
 
 void bufferRender() {
-  for (uint8_t i = 0; i < LED_BUFFER_SIZE; i++) {
-    RGB_Set(0, i, Gamma_RGB(led_buffer[i]));
+  for (uint8_t i = 0; i < LED_COUNT_KEYS; i++) {
+    RGB_Color_t new_color = led_buffer[i];
+
+    new_color.r = MIN(new_color.r / 2, 128);
+    new_color.g = MIN(new_color.g / 2, 128);
+    new_color.b = MIN(new_color.b / 2, 128);
+
+    RGB_Set(0, i, new_color);
   }
+
+  for (uint8_t i = 0; i < CONTROLLER_RGB_LEDS_TURNTABLE; i++) {
+    RGB_Set(0, i, led_buffer[i + LED_INDEX_START_TT]);
+  }
+
   bufferReset();
 }
+
+// --- Gamma ---
+
+const uint8_t gamma8[] = {
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
+    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,
+    2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,
+    4,   5,   5,   5,   5,   6,   6,   6,   6,   7,   7,   7,   7,   8,   8,
+    8,   9,   9,   9,   10,  10,  10,  11,  11,  11,  12,  12,  13,  13,  13,
+    14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,  20,  21,
+    21,  22,  22,  23,  24,  24,  25,  25,  26,  27,  27,  28,  29,  29,  30,
+    31,  32,  32,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,  42,
+    43,  44,  45,  46,  47,  48,  49,  50,  50,  51,  52,  54,  55,  56,  57,
+    58,  59,  60,  61,  62,  63,  64,  66,  67,  68,  69,  70,  72,  73,  74,
+    75,  77,  78,  79,  81,  82,  83,  85,  86,  87,  89,  90,  92,  93,  95,
+    96,  98,  99,  101, 102, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119,
+    120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146,
+    148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
+    180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
+    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
+    255};
+
+uint8_t gammaCorrect(uint8_t value) { return gamma8[value]; };
+RGB_Color_t gammaCorrectRGB(RGB_Color_t color) {
+  RGB_Color_t new_color = {};
+
+  new_color.r = gamma8[color.r];
+  new_color.g = gamma8[color.g];
+  new_color.b = gamma8[color.b];
+
+  return new_color;
+};
 
 // --- Idle ---
 
@@ -150,7 +194,7 @@ void twinkleUpdate(TwinkleState_t state[]) {
       }
 
       uint8_t breathe = calculateBreathe(led->life, led->max_life);
-      uint8_t brightness = Gamma(breathe);
+      uint8_t brightness = gammaCorrect(breathe);
       RGB_Color_t new_color = {.r = scale(led->color.r, brightness),
                                .g = scale(led->color.g, brightness),
                                .b = scale(led->color.b, brightness)};
@@ -203,10 +247,10 @@ uint8_t sweepGetLEDBrightness(uint16_t progress, uint16_t led_start,
     uint8_t led_progress_normalised = (led_progress * 255) / led_duration;
 
     if (reverse) {
-      return Gamma(255 - led_progress_normalised);
+      return gammaCorrect(255 - led_progress_normalised);
     }
 
-    return Gamma(led_progress_normalised);
+    return gammaCorrect(led_progress_normalised);
   }
 
   return reverse ? 255 : 0;
