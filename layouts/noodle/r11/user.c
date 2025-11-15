@@ -236,6 +236,7 @@ static void twinkleUpdate() {
 }
 
 static SweepState_t SweepState = {
+    .active_mode = true,
     .pos = 0,
     .loop_duration = RGB_FRAMERATE_TARGET * 5,
     .direction = CW,
@@ -283,7 +284,7 @@ static void sweepReset(bool wake) {
   }
 }
 
-void sweepRun(uint16_t progress, uint16_t led_duration, bool reverse) {
+static void sweepRun(uint16_t progress, uint16_t led_duration, bool reverse) {
   for (uint8_t i = 0; i < CONTROLLER_RGB_LEDS_TURNTABLE; i++) {
     uint8_t effective_i = sweepGetRealIndex(i);
     uint16_t led_start = i * led_duration;
@@ -329,6 +330,7 @@ static void sweepUpdate() {
     if (SweepState.active_mode) {
       // jump to animation start if active
       SweepState.pos = 0;
+      return;
     }
   }
   }
