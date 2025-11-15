@@ -18,7 +18,7 @@ static inline void Timer_Tick(void) {
 }
 
 // Get the number of global timer ticks
-static inline uint16_t Timer_GetTicks(void) {
+static inline uint32_t Timer_GetTicks(void) {
   return _timer.ticks;
 }
 
@@ -28,10 +28,10 @@ static inline void Timer_Reset(TimerTick_t *store) {
 }
 
 // Every period milliseconds, return true
-static inline bool Timer_EveryDurationInMs(TimerTick_t *store, uint16_t period) {
-  const uint16_t duration = (period * TASK_TIMER_FREQUENCY) / 1000;
+static inline bool Timer_EveryDurationInMs(TimerTick_t *store, uint32_t period) {
+  const uint32_t duration = (period * TASK_TIMER_FREQUENCY) / 1000;
 
-  const uint16_t delta = _timer.ticks - store->ticks;
+  const uint32_t delta = _timer.ticks - store->ticks;
   if (delta < duration) return false;
 
   Timer_Reset(store);

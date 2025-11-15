@@ -42,12 +42,9 @@ typedef struct {
 enum SpinDirection_t { CW, CCW };
 
 typedef struct {
+  bool active_mode;
   uint16_t pos;
   const uint16_t loop_duration;
   const uint16_t led_start_pos;
   const enum SpinDirection_t direction;
 } SweepState_t;
-
-extern RGB_Color_t lighting_buf[LED_BUFFER_SIZE];
-extern IdleState_t IdleState;
-extern TwinkleState_t TwinkleState[LED_COUNT_KEYS];
